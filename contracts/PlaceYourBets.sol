@@ -6,21 +6,27 @@ contract PlaceYourBets {
     struct BetPool {
         string title;
         string description;
-        uint256 choice1;
-        uint256 choice2;
+        string choice1;
+        string choice2;
         BET_STATUS status;
         // assume even 1:1 odds for now
-        uint256 min_buy_in;
+        // have a set bet amount for now
+        uint256 bet_amount;
+        uint8 winning_option; // 1 or 2
+        mapping(address => Bet) bets;
     }
 
     struct Bet {
-        address addr;
-        uint256 bet_amount;
-        
+        address bettor_addr;
+        uint256 amount;
+        uint8 choice; // must be 1 or 2
     }
 
+    mapping(uint256 => BetPool) public pools;
+    uint256 pool_count;
+
     enum BET_STATUS {
-        CREATED,
+        OPEN,
         IN_PROGRESS,
         COMPLETED,
     }
