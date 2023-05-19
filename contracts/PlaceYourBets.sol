@@ -3,12 +3,20 @@ pragma solidity ^0.8.9;
 
 contract PlaceYourBets {
 
+    struct BetPool {
+        string title;
+        string description;
+        uint256 choice1;
+        uint256 choice2;
+        BET_STATUS status;
+        // assume even 1:1 odds for now
+        uint256 min_buy_in;
+    }
+
     struct Bet {
-        title: string,
-        description: string,
-        choice1: string,
-        choince2: string,
-        status: BET_STATUS,
+        address addr;
+        uint256 bet_amount;
+        
     }
 
     enum BET_STATUS {
