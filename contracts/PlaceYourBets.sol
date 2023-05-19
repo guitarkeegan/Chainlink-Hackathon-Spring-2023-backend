@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.7;
 
 contract PlaceYourBets {
 
@@ -8,7 +8,7 @@ contract PlaceYourBets {
         string description;
         string choice1;
         string choice2;
-        BET_STATUS status;
+        BetStatus status;
         // assume even 1:1 odds for now
         // have a set bet amount for now
         uint256 bet_amount;
@@ -29,13 +29,13 @@ contract PlaceYourBets {
     mapping(uint256 => BetPool) public pools;
     uint256 pool_count;
 
-    enum BET_STATUS {
+    enum BetStatus {
         OPEN,
         IN_PROGRESS,
-        COMPLETED,
+        COMPLETED
     }
 
-    function createPool(string memory title, string memory description, string memory choice1, string memory choice2, uint256 bet_amount){
+    function createPool(string memory title, string memory description, string memory choice1, string memory choice2, uint256 bet_amount) public {
         // check 
         uint256 fixed_bet_amount;
         if (bet_amount > 0){
@@ -44,14 +44,14 @@ contract PlaceYourBets {
             revert BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
         }
         // create a new pool and add it to the pools
-        BetPool(title, description, choice1, choice2, BET_STATUS.OPEN, fixed_bet_amount);
+        
         // require whitelisted accounts?
         
     }
 
-    function createBet(){}
-    // views 
-    function availableBets(){}
-    function getBetDetails(){}
-    function getBetStatus(){}
+    // function createBet(){}
+    
+    // function availableBets(){}
+    // function getBetDetails(){}
+    // function getBetStatus(){}
 }
