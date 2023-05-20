@@ -14,7 +14,7 @@ contract PlaceYourBets {
         uint256 bet_amount;
         uint256 total_pot;
         uint8 winning_option; // 1 or 2
-        mapping(address => Bet) bets;
+        mapping(address => Bet) bets; // causeing error
     }
 
     struct Bet {
