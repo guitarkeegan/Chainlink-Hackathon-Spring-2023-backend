@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
+
+import "hardhat/console.sol";
+
 contract PlaceYourBets {
     struct BetPool {
         address creator;
@@ -26,7 +29,8 @@ contract PlaceYourBets {
 
     // errors
     error BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
-    // store all pools
+
+    /* state variables */
     mapping(uint256 => BetPool) public pools;
     uint256 pool_count;
 
@@ -36,13 +40,19 @@ contract PlaceYourBets {
         COMPLETED
     }
 
+    
+    /* events */
+    event PoolCreated(address indexed creator);
+
+    constructor(){}
+
     function createBetPool(
         string memory _title,
         string memory _description,
         string memory _choice1,
         string memory _choice2,
         uint256 _betAmount
-    ) public returns (uint256) {
+    ) public {
         if (_betAmount <= 0) {
             revert BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
         }
@@ -51,7 +61,7 @@ contract PlaceYourBets {
         pools[pool_count] = newPool;
         pool_count++;
 
-        return pool_count - 1;
+        emit PoolCreated(msg.sender);
     }
 
     // function createBet(){}
