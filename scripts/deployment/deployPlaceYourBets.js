@@ -1,38 +1,29 @@
-const { network, ethers } = require("hardhat")
+const { network, ethers, run } = require("hardhat")
 const {
     networkConfig,
     developmentChains,
     VERIFICATION_BLOCK_CONFIRMATIONS,
 } = require("../../helper-hardhat-config")
-const { verify } = require("../../helper-functions");
+const { verify } = require("../../helper-functions")
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
-    const { deploy, log } = deployments
-    const { deployer } = await getNamedAccounts()
-    const chainId = network.config.chainId
+async function deployPlaceYourBets(chainId) {
+    console.log("running script...")
 
-    if (chainId == 31337) {
-        const waitBlockConfirmations = developmentChains.includes(network.name)
-            ? 1
-            : VERIFICATION_BLOCK_CONFIRMATIONS
+    if (developmentChains.includes(network.name)) {
+        const placeYourBetsFactory = await ethers.getContractFactory("PlaceYourBets")
+        const placeYourBets = await placeYourBetsFactory.deploy()
 
-        log("----------------------------------------------------")
-        const arguments = []
-        const placeYourBets = await deploy("PlaceYourBets", {
-            from: deployer,
-            args: arguments,
-            log: true,
-            waitConfirmations: waitBlockConfirmations,
-        });
+        console.log(`PlaceYourBets deployed to ${placeYourBets.address} on ${network.name}`)
+    }
 
-        // Verify the deployment
-        if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-            log("Verifying...")
-            await verify(placeYourBets.address, arguments)
-        }
-
-        log("----------------------------------------------------")
+    // Verify the deployment
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+        log("Verifying...")
+        await verify(placeYourBets.address, arguments)
     }
 }
 
+module.exports = {
+    deployPlaceYourBets,
+}
 module.exports.tags = ["all", "placeYourBets"]

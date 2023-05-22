@@ -11,20 +11,21 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             accounts = await ethers.getSigners() // could also do with getNamedAccounts
             //   deployer = accounts[0]
             streamer = accounts[1]; 
-            await deployments.fixture(["placeYourBets"]); 
-            placeYourBetsContract = await ethers.getContract("PlaceYourBets");
-            poolCreator = placeYourBetsContract.connect(streamer);
+            placeYourBetsContract = await ethers.getContractFactory("PlaceYourBets")
+            poolCreator = await placeYourBetsContract 
+                .connect(streamer)
+                .deploy()
         });
 
         describe("createBetPool", function() {
            it("emits an event after successfully creating a new betting pool", async ()=>{
-            await expect(poolCreator.createBetPool({
-                _title: "Ultimate Battle",
-                _description: "My team is going to destroy the other team!!",
-                _choice1: "K's team",
-                _choice2: "O's team",
-                _betAmount: ethers.utils.parseEther("0.01") // 0.01 ETH 
-            })).to.emit(
+            await expect(poolCreator.createBetPool(
+                "Ultimate Battle",
+                "My team is going to destroy the other team!!",
+                "K's team",
+                "O's team",
+                ethers.utils.parseEther("0.01") // 0.01 ETH 
+            )).to.emit(
                 poolCreator,
                 "PoolCreated"
             );

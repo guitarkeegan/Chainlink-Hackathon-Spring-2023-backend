@@ -40,11 +40,8 @@ contract PlaceYourBets {
         COMPLETED
     }
 
-    
     /* events */
     event PoolCreated(address indexed creator);
-
-    constructor(){}
 
     function createBetPool(
         string memory _title,
