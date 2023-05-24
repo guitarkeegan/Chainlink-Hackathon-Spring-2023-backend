@@ -37,6 +37,7 @@ contract PlaceYourBets {
 
     /* events */
     event PoolCreated(address indexed creator);
+    event BetCreated(address indexed BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO);
 
     function createBetPool(
         string memory _title,
@@ -87,6 +88,7 @@ contract PlaceYourBets {
         if (_choice == 2){
             pools[_poolIndex].choice2Bets.push(payable(msg.sender));
         }
+        emit BetCreated(msg.sender);
         return pools[_poolIndex].title;
     }
 
