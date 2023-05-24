@@ -5,13 +5,14 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 !developmentChains.includes(network.name)
     ? describe.skip
     : describe("unit tests for PlaceYourBets", async function () {
-          let accounts, streamer, placeYourBetsContract, poolCreator
+          let accounts, streamer, placeYourBetsContract, poolCreator, randoUser
           beforeEach(async () => {
               accounts = await ethers.getSigners() // could also do with getNamedAccounts
               //   deployer = accounts[0]
               streamer = accounts[1]
+              randoUser = accounts[2]
               placeYourBetsContract = await ethers.getContractFactory("PlaceYourBets")
-              poolCreator = await placeYourBetsContract.connect(streamer).deploy()
+              poolCreator = await placeYourBetsContract.connect(accounts[0]).deploy()
           })
 
           describe("createBetPool", function () {
@@ -41,7 +42,6 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               })
 
               it("should return false if the betpool does not exist", async () => {
-
                   await poolCreator.createBetPool(
                       "Ultimate Battle",
                       "My team is going to destroy the other team!!",
@@ -49,8 +49,28 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       "O's team",
                       ethers.utils.parseEther("0.01") // 0.01 ETH
                   )
-                  expect(await poolCreator.poolExists(4)).to.be.false;
-              });
+                  expect(await poolCreator.poolExists(4)).to.be.false
+              })
+          })
+
+          describe("placeBet", function () {
+              it("should return the title of the bet pool", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  // TODO: placeBet with other signer than deployer 
+                  expect(await poolCreator.placeBet(
+                      0,
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )).to.emit(poolCreator, "BetCreated")
+              })
           })
       })
 

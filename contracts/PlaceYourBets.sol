@@ -24,7 +24,7 @@ contract PlaceYourBets {
     error BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
     error NO_BET_POOL_AT_THAT_INDEX();
     error BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
-    error CHOSE_1_OR_2();
+    error CHOOSE_1_OR_2();
     error POOL_NOT_OPEN();
     /* state variables */
     BetPool[] public pools;
@@ -68,7 +68,7 @@ contract PlaceYourBets {
     function placeBet(
         uint256 _poolIndex,
         uint8 _choice
-    ) public payable returns (string memory) {
+    ) public payable {
         bool exists = poolExists(_poolIndex);
         if (!exists){
             revert NO_BET_POOL_AT_THAT_INDEX();
@@ -76,8 +76,9 @@ contract PlaceYourBets {
         if (msg.value != pools[_poolIndex].betAmount){
             revert BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
         }
-        if (_choice != 1 || _choice != 2){
-            revert CHOSE_1_OR_2();
+        // problem here with forcing 1 or 2
+        if (_choice > 2 ){
+            revert CHOOSE_1_OR_2();
         }
         if (pools[_poolIndex].status != BetStatus.OPEN){
             revert POOL_NOT_OPEN();
@@ -89,7 +90,6 @@ contract PlaceYourBets {
             pools[_poolIndex].choice2Bets.push(payable(msg.sender));
         }
         emit BetCreated(msg.sender);
-        return pools[_poolIndex].title;
     }
 
     function poolExists(uint256 _poolIndex) public view returns(bool){
