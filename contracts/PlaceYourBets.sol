@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-
 import "hardhat/console.sol";
 
 contract PlaceYourBets {
@@ -21,18 +20,14 @@ contract PlaceYourBets {
         address[] choice2Bets;
     }
 
-    struct Bet {
-        address bettor_addr;
-        uint256 amount;
-        uint8 choice; // must be 1 or 2
-    }
-
     // errors
     error BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
-
+    error NO_BET_POOL_AT_THAT_INDEX();
+    error BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
+    error CHOSE_1_OR_2();
+    error POOL_NOT_OPEN();
     /* state variables */
-    mapping(uint256 => BetPool) public pools;
-    uint256 pool_count;
+    BetPool[] public pools;
 
     enum BetStatus {
         OPEN,
@@ -53,15 +48,54 @@ contract PlaceYourBets {
         if (_betAmount <= 0) {
             revert BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
         }
-        BetPool memory newPool = BetPool(msg.sender, _title, _description, _choice1, _choice2, BetStatus.OPEN, _betAmount, 0, 0, new address[](0), new address[](0));
+        BetPool memory newPool = BetPool(
+            msg.sender,
+            _title,
+            _description,
+            _choice1,
+            _choice2,
+            BetStatus.OPEN,
+            _betAmount, 0, 0, new address[](0),
+            new address[](0)
+        );
 
-        pools[pool_count] = newPool;
-        pool_count++;
+        pools.push(newPool);
 
         emit PoolCreated(msg.sender);
     }
 
-    // function createBet(){}
+    function placeBet(
+        uint256 _poolIndex,
+        uint8 _choice
+    ) public payable returns (string memory) {
+        bool exists = poolExists(_poolIndex);
+        if (!exists){
+            revert NO_BET_POOL_AT_THAT_INDEX();
+        }
+        if (msg.value != pools[_poolIndex].betAmount){
+            revert BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
+        }
+        if (_choice != 1 || _choice != 2){
+            revert CHOSE_1_OR_2();
+        }
+        if (pools[_poolIndex].status != BetStatus.OPEN){
+            revert POOL_NOT_OPEN();
+        }
+        if (_choice == 1){
+            pools[_poolIndex].choice1Bets.push(payable(msg.sender));
+        }
+        if (_choice == 2){
+            pools[_poolIndex].choice2Bets.push(payable(msg.sender));
+        }
+        return pools[_poolIndex].title;
+    }
+
+    function poolExists(uint256 _poolIndex) public view returns(bool){
+        if (_poolIndex >= pools.length){
+            return false;
+        } 
+        return true;
+    }
 
     // function availableBets(){}
     // function getBetDetails(){}
