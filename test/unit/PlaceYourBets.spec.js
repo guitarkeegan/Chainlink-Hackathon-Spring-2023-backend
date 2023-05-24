@@ -62,14 +62,36 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       "O's team",
                       ethers.utils.parseEther("0.01") // 0.01 ETH
                   )
-                  // TODO: placeBet with other signer than deployer 
-                  expect(await poolCreator.placeBet(
+                  // TODO: placeBet with other signer than deployer
+                  expect(
+                      await poolCreator.placeBet(
+                          0,
+                          1,
+                          {
+                              value: ethers.utils.parseEther("0.01"),
+                          } /**index , choice .. include value of bet */
+                      )
+                  ).to.emit(poolCreator, "BetCreated")
+              })
+          })
+          describe("getBetAmount", function () {
+              it("should get the bet amount for the given pool", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
                       0,
                       1,
                       {
                           value: ethers.utils.parseEther("0.01"),
                       } /**index , choice .. include value of bet */
-                  )).to.emit(poolCreator, "BetCreated")
+                  )
+                  //TODO: fix this
+                  assert.equal(await poolCreator.getBetAmount(0), ethers.utils.parseEther("0.01"));
               })
           })
       })

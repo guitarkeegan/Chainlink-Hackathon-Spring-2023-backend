@@ -100,6 +100,11 @@ contract PlaceYourBets {
     }
 
     // function availableBets(){}
-    // function getBetDetails(){}
+    function getBetAmount(uint256 _poolIndex) public view returns(uint256){
+        if (!poolExists(_poolIndex)){
+            revert NO_BET_POOL_AT_THAT_INDEX();
+        }
+        return pools[_poolIndex].betAmount;
+    }
     // function getBetStatus(){}
 }
