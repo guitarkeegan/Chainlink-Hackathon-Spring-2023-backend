@@ -37,7 +37,7 @@ contract PlaceYourBets {
 
     /* events */
     event PoolCreated(address indexed creator);
-    event BetCreated(address indexed BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO);
+    event BetCreated(address indexed bettor);
 
     function createBetPool(
         string memory _title,
@@ -89,7 +89,8 @@ contract PlaceYourBets {
         if (_choice == 2){
             pools[_poolIndex].choice2Bets.push(payable(msg.sender));
         }
-        emit BetCreated(msg.sender);
+        address bettor = msg.sender;
+        emit BetCreated(bettor);
     }
 
     function poolExists(uint256 _poolIndex) public view returns(bool){
@@ -99,12 +100,15 @@ contract PlaceYourBets {
         return true;
     }
 
+    //TODO:
     // function availableBets(){}
+
     function getBetAmount(uint256 _poolIndex) public view returns(uint256){
         if (!poolExists(_poolIndex)){
             revert NO_BET_POOL_AT_THAT_INDEX();
         }
         return pools[_poolIndex].betAmount;
     }
+    // TODO: 
     // function getBetStatus(){}
 }
