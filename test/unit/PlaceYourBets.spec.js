@@ -75,8 +75,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               })
           })
           describe("getBetAmount", function () {
-              it("should get the bet amount for the given pool", async () => {
-                  await poolCreator.createBetPool(
+              it("should get the bet amount for the given pool", async () => { await poolCreator.createBetPool(
                       "Ultimate Battle",
                       "My team is going to destroy the other team!!",
                       "K's team",
@@ -90,8 +89,24 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                           value: ethers.utils.parseEther("0.01"),
                       } /**index , choice .. include value of bet */
                   )
-                  //TODO: fix this
-                  assert.equal(await poolCreator.getBetAmount(0), ethers.utils.parseEther("0.01"));
+                  expect(await poolCreator.getBetAmount(0)).to.equal(ethers.utils.parseEther("0.01"));
+              })
+              
+              it("should not match the test amount for the given pool", async () => { await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      0,
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  expect(await poolCreator.getBetAmount(0)).to.not.equal(ethers.utils.parseEther("12"));
               })
           })
       })
