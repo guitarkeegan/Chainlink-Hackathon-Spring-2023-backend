@@ -109,6 +109,17 @@ contract PlaceYourBets {
         }
         return pools[_poolIndex].betAmount;
     }
-    // TODO: 
-    // function getBetStatus(){}
+    
+    function getBetStatusAll(uint256 numOfBetsToReturn) public view {
+        // return all open bets
+        // can't push to memory array
+        uint256[] memory openBetPoolsIndex = new uint256[](numOfBetsToReturn);
+
+        for (uint i=0;i<pools.length;i++){
+            if (pools[i].status == BetStatus.OPEN){
+                openBetPoolsIndex[i] = i;
+            }
+        }
+        
+    }
 }
