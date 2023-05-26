@@ -109,8 +109,8 @@ contract PlaceYourBets {
         }
         return pools[_poolIndex].betAmount;
     }
-    
-    function getBetStatusAll(uint256 numOfBetsToReturn) public view {
+
+    function getBetStatusAll(uint256 numOfBetsToReturn) public view returns(uint256[] memory) {
         // return all open bets
         // can't push to memory array
         uint256[] memory openBetPoolsIndex = new uint256[](numOfBetsToReturn);
@@ -120,6 +120,7 @@ contract PlaceYourBets {
                 openBetPoolsIndex[i] = i;
             }
         }
-        
+        // generally returning arrays should be avoided but...
+        return openBetPoolsIndex;
     }
 }
