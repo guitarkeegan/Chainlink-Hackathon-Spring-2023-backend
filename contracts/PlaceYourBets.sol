@@ -123,4 +123,11 @@ contract PlaceYourBets {
         // generally returning arrays should be avoided but...
         return openBetPoolsIndex;
     }
+
+    function getBetPoolData(uint256 _index) public view returns(BetPool memory){
+        if (!poolExists(_index)){
+            revert NO_BET_POOL_AT_THAT_INDEX();
+        }
+        return pools[_index];
+    }
 }

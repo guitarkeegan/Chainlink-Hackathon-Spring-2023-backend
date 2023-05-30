@@ -123,6 +123,24 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 expect(await poolCreator.poolExists(0)).to.be.true;
             });
           })
+          describe("getBetPoolData", function(){
+            it("should return the pool data from the given betPool", async ()=>{
+                await poolCreator.createBetPool(
+                    "Ultimate Battle",
+                    "My team is going to destroy the other team!!",
+                    "K's team",
+                    "O's team",
+                    ethers.utils.parseEther("0.01") // 0.01 ETH
+                );
+                const betData = await poolCreator.getBetPoolData(0);
+                expect(betData.title).to.equal("Ultimate Battle");
+                expect(betData.description).to.equal("My team is going to destroy the other team!!");
+                expect(betData.choice1).to.equal("K's team");
+                expect(betData.choice2).to.equal("O's team");
+                expect(betData.betAmount).to.equal(ethers.utils.parseEther("0.01"));
+                console.log(betData);
+            })
+          })
       })
 
 // string memory _title,
