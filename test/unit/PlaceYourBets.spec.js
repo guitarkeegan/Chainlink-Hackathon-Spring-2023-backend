@@ -109,6 +109,20 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   expect(await poolCreator.getBetAmount(0)).to.not.equal(ethers.utils.parseEther("12"));
               })
           })
+          describe("getOpenBets", function(){
+            it("should return an array of indecies for all open bets", async () => {
+                await poolCreator.createBetPool(
+                    "Ultimate Battle",
+                    "My team is going to destroy the other team!!",
+                    "K's team",
+                    "O's team",
+                    ethers.utils.parseEther("0.01") // 0.01 ETH
+                );
+                const indexArr = await poolCreator.getOpenBets(1);
+                assert(indexArr.length === 1);
+                expect(await poolCreator.poolExists(0)).to.be.true;
+            });
+          })
       })
 
 // string memory _title,

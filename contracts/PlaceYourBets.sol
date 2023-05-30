@@ -110,9 +110,9 @@ contract PlaceYourBets {
         return pools[_poolIndex].betAmount;
     }
 
-    function getBetStatusAll(uint256 numOfBetsToReturn) public view returns(uint256[] memory) {
+    function getOpenBets(uint256 numOfBetsToReturn) public view returns(uint256[] memory) {
         // return all open bets
-        // can't push to memory array
+        // can't push to memory array, so return an array of indecies instead
         uint256[] memory openBetPoolsIndex = new uint256[](numOfBetsToReturn);
 
         for (uint i=0;i<pools.length;i++){
