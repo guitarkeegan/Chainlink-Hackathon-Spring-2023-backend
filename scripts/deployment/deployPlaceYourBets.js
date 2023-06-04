@@ -1,4 +1,4 @@
-const { network, ethers, run } = require("hardhat")
+const { network, ethers } = require("hardhat")
 const {
     networkConfig,
     developmentChains,
