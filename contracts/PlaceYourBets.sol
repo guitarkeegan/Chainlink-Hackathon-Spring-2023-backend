@@ -4,8 +4,9 @@ pragma solidity ^0.8.7;
 import "hardhat/console.sol";
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AutomationCompatibleInterface.sol";
+import "@chainlink/contracts/src/v0.8/ConfirmedOwner.sol";
 
-contract PlaceYourBets is ChainlinkClient, AutomationCompatibleInterface {
+contract PlaceYourBets is ChainlinkClient, AutomationCompatibleInterface, ConfirmedOwner {
     using Chainlink for Chainlink.Request;
     
     struct BetPool {
@@ -45,9 +46,47 @@ contract PlaceYourBets is ChainlinkClient, AutomationCompatibleInterface {
     event BetCreated(address indexed bettor);
 
     address i_owner;
+    bytes32 private jobId;
+    uint256 private fee;
+    bytes32 public rank;
+    bytes32 public tier;
+    
+    event RequestMultipleFullfilled(
+        bytes32 indexed requestId,
+        bytes32 rank,
+        bytes32 tier
+    )
 
-    constructor() {
+    constructor() ConfirmedOwner(msg.sender){
         i_owner = msg.sender;
+        setChainlinkToken(0x326C977E6efc84E512bB9C30f76E30c160eD06FB);
+        setChainlinkOracle();
+        jobid = "myJobId"
+        fee = (1 * LINK_DIVISIBILITY) / 10; // 0,1 * 10**18 (Varies by network and job)
+    }
+
+    function requestMultipleParameters() public {
+        Chainlink.Request memory req = buildChainlinkRequest(
+            jobId,
+            address(this),
+            this.fulfillMultipleParameters.selector
+        );
+        req.add(
+            "urlBTC",
+            "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC"
+        );
+        req.add("pathBTC", "BTC");
+        req.add(
+            "urlUSD",
+            "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD"
+        );
+        req.add("pathUSD", "USD");
+        req.add(
+            "urlEUR",
+            "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=EUR"
+        );
+        req.add("pathEUR", "EUR");
+        sendChainlinkRequest(req, fee); // MWR API.
     }
 
     function createBetPool(
