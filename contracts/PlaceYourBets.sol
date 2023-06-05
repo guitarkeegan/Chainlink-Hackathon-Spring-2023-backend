@@ -81,7 +81,7 @@ contract PlaceYourBets is ChainlinkClient, AutomationCompatibleInterface, Confir
         bool result = false;
         for (uint256 i=0;i<curBets.length;i++){
             // check status
-            if (curBets[i].status == BetStatus.COMPLETED){
+            if (curBets[i].status == BetStatus.IN_PROGRESS){
                 result = true;
                 break;
             }

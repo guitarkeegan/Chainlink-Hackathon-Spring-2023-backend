@@ -141,6 +141,11 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                 console.log(betData);
             })
           })
+          describe("checkUpkeep", function(){
+            it("should return false if there are no in-progress events", () =>{
+                // stuff
+            })
+          })
       })
 
 // string memory _title,
