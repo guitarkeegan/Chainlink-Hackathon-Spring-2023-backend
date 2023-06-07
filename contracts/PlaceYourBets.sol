@@ -23,19 +23,21 @@ contract PlaceYourBets is AutomationCompatibleInterface {
     }
 
     // errors
-    error BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
-    error BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
-    error CHOOSE_1_OR_2();
-    error POOL_NOT_OPEN();
-    error UpkeepNotNeeded();
+    error PlaceYourBets__BetAmountMustBeGreaterThanZero();
+    error PlaceYourBets__BetNotEqualToBetPoolAmount();
+    error PlaceYourBets__Choose1Or2();
+    error PlaceYourBets__PoolNotOpen();
+    error PlaceYourBets__UpkeepNotNeeded();
     error PlaceYourBets__NotOwner();
     error PlaceYourBets__BetInProgress();
-
+    error PlaceYourBets__TransferFailed();
+    error PlaceYourBets__WinnerNotChosen();
     /* state variables */
     BetPool s_betPool;
     BetPool[] s_pastBets;
 
     enum BetStatus {
+        NO_BET,
         OPEN,
         IN_PROGRESS,
         COMPLETED
@@ -43,7 +45,7 @@ contract PlaceYourBets is AutomationCompatibleInterface {
 
     /* events */
     event PoolCreated(address indexed creator);
-    event BetCreated(address indexed bettor);
+    event BetPlaced(address indexed bettor);
     event WinnerSelected(uint8 indexed winningChoice);
     address i_owner;
 
@@ -59,28 +61,45 @@ contract PlaceYourBets is AutomationCompatibleInterface {
     function performUpkeep(bytes calldata) external override {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) {
-            revert UpkeepNotNeeded();
+            revert PlaceYourBets__UpkeepNotNeeded();
         }
-        // TODO: check winner of bet and payout
         uint8 winningChoice = s_betPool.winningOption;
         if (winningChoice != 0) {
             BetPool memory completedPool = s_betPool;
             if (winningChoice == 1) {
+                uint256 numOfWinners = completedPool.choice1Bets.length;
                 for (uint256 i = 0; i < completedPool.choice1Bets.length; i++) {
-                    // TODO: pay winners
+                    (bool success, ) = completedPool.choice1Bets[i].call{
+                        value: completedPool.totalPot / numOfWinners
+                    }("");
+                    if (!success) {
+                        revert PlaceYourBets__TransferFailed();
+                    }
                 }
             } else {
+                uint256 numOfWinners = completedPool.choice2Bets.length;
                 for (uint256 i = 0; i < completedPool.choice2Bets.length; i++) {
-                    // TODO: pay winners
+                    (bool success, ) = completedPool.choice2Bets[i].call{
+                        value: completedPool.totalPot / numOfWinners
+                    }("");
+                    if (!success) {
+                        revert PlaceYourBets__TransferFailed();
+                    }
                 }
             }
+        } else {
+            revert PlaceYourBets__WinnerNotChosen();
         }
     }
 
     function checkUpkeep(
         bytes memory
-    ) public returns (bool upkeepNeeded, bytes memory /* performData */) {
-        BetPool[] memory curBet = s_betPool;
+    )
+        public
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        BetPool memory curBet = s_betPool;
         bool result = false;
         if (curBet.status == BetStatus.COMPLETED) {
             upkeepNeeded = true;
@@ -97,9 +116,11 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         uint256 _betAmount
     ) public {
         if (_betAmount <= 0) {
-            revert BET_AMOUNT_MUST_BE_GREATER_THAN_ZERO();
+            revert PlaceYourBets__BetAmountMustBeGreaterThanZero();
         }
-        if (s_betPool != 0) {
+        if (s_betPool.status == BetStatus.OPEN ||
+         s_betPool.status == BetStatus.IN_PROGRESS ||
+         s_betPool.status == BetStatus.COMPLETED) {
             revert PlaceYourBets__BetInProgress();
         }
         BetPool memory newPool = BetPool(
@@ -119,16 +140,16 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         emit PoolCreated(msg.sender);
     }
 
-    function placeBet(uint256 _poolIndex, uint8 _choice) public payable {
+    function placeBet(uint8 _choice) public payable {
         if (msg.value != s_betPool.betAmount) {
-            revert BET_NOT_EQUAL_TO_POOL_BET_AMOUNT();
+            revert PlaceYourBets__BetNotEqualToBetPoolAmount();
         }
         // problem here with forcing 1 or 2
         if (_choice > 2) {
-            revert CHOOSE_1_OR_2();
+            revert PlaceYourBets__Choose1Or2();
         }
         if (s_betPool.status != BetStatus.OPEN) {
-            revert POOL_NOT_OPEN();
+            revert PlaceYourBets__PoolNotOpen();
         }
         if (_choice == 1) {
             s_betPool.choice1Bets.push(payable(msg.sender));
@@ -138,7 +159,7 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         }
         s_betPool.totalPot += msg.value;
         address bettor = msg.sender;
-        emit BetCreated(bettor);
+        emit BetPlaced(bettor);
     }
 
     function selectWinner(uint8 _winningChoice) private onlyOwner {
@@ -146,11 +167,30 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         emit WinnerSelected(s_betPool.winningOption);
     }
 
+    function resetBetPool() public {
+        if (s_betPool.status == BetStatus.COMPLETED){
+            
+            BetPool memory poolToStore = s_betPool;
+            s_pastBets.push(poolToStore);
+           // this might be expensive...
+            s_betPool.title = "";
+            s_betPool.description = "";
+            s_betPool.choice1 = "";
+            s_betPool.choice2 = "";
+            s_betPool.status = BetStatus.NO_BET;
+            s_betPool.betAmount = 0;
+            s_betPool.totalPot = 0;
+            s_betPool.winningOption = 0;
+            s_betPool.choice1Bets = new address[](0);
+            s_betPool.choice2Bets = new address[](0);
+        }
+    }
+
     function getOwner() public view returns (address) {
         return i_owner;
     }
 
-    function getBetAmount(uint256 _poolIndex) public view returns (uint256) {
+    function getBetAmount() public view returns (uint256) {
         return s_betPool.betAmount;
     }
 
