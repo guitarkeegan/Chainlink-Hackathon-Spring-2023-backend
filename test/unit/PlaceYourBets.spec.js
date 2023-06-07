@@ -147,9 +147,3 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
             })
           })
       })
-
-// string memory _title,
-// string memory _description,
-// string memory _choice1,
-// string memory _choice2,
-// uint256 _betAmount
