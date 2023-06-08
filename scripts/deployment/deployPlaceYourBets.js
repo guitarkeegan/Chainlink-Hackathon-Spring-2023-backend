@@ -19,7 +19,7 @@ async function deployPlaceYourBets(chainId) {
     // Verify the deployment
     if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...")
-        await verify(placeYourBets.address, arguments)
+        await verify(placeYourBets.address)
     }
 }
 

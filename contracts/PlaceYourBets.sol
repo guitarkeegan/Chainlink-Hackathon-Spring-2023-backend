@@ -32,6 +32,8 @@ contract PlaceYourBets is AutomationCompatibleInterface {
     error PlaceYourBets__BetInProgress();
     error PlaceYourBets__TransferFailed();
     error PlaceYourBets__WinnerNotChosen();
+    error PlaceYourBets__PoolNotCompleted();
+    error PlaceYourBets__NotPoolOwner();
     /* state variables */
     BetPool s_betPool;
     BetPool[] s_pastBets;
@@ -76,6 +78,8 @@ contract PlaceYourBets is AutomationCompatibleInterface {
                         revert PlaceYourBets__TransferFailed();
                     }
                 }
+                s_betPool.status = BetStatus.COMPLETED;
+                resetBetPool();
             } else {
                 uint256 numOfWinners = completedPool.choice2Bets.length;
                 for (uint256 i = 0; i < completedPool.choice2Bets.length; i++) {
@@ -86,6 +90,8 @@ contract PlaceYourBets is AutomationCompatibleInterface {
                         revert PlaceYourBets__TransferFailed();
                     }
                 }
+                s_betPool.status = BetStatus.COMPLETED;
+                resetBetPool();
             }
         } else {
             revert PlaceYourBets__WinnerNotChosen();
@@ -97,11 +103,10 @@ contract PlaceYourBets is AutomationCompatibleInterface {
     )
         public
         override
-        returns (bool upkeepNeeded, bytes memory /* performData */)
+        returns (bool upkeepNeeded, bytes memory )
     {
         BetPool memory curBet = s_betPool;
-        bool result = false;
-        if (curBet.status == BetStatus.COMPLETED) {
+        if (curBet.winningOption > 0 ) {
             upkeepNeeded = true;
         } else {
             upkeepNeeded = false;
@@ -140,6 +145,7 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         emit PoolCreated(msg.sender);
     }
 
+    // check if address has already made a bet?
     function placeBet(uint8 _choice) public payable {
         if (msg.value != s_betPool.betAmount) {
             revert PlaceYourBets__BetNotEqualToBetPoolAmount();
@@ -162,7 +168,14 @@ contract PlaceYourBets is AutomationCompatibleInterface {
         emit BetPlaced(bettor);
     }
 
-    function selectWinner(uint8 _winningChoice) private onlyOwner {
+    function startBet() public {
+        if (msg.sender != s_betPool.creator){
+            revert PlaceYourBets__NotPoolOwner();
+        }
+        s_betPool.status = BetStatus.IN_PROGRESS;
+    }
+
+    function selectWinner(uint8 _winningChoice) public onlyOwner {
         s_betPool.winningOption = _winningChoice;
         emit WinnerSelected(s_betPool.winningOption);
     }
@@ -183,6 +196,8 @@ contract PlaceYourBets is AutomationCompatibleInterface {
             s_betPool.winningOption = 0;
             s_betPool.choice1Bets = new address[](0);
             s_betPool.choice2Bets = new address[](0);
+        } else {
+            revert PlaceYourBets__PoolNotCompleted();
         }
     }
 
@@ -212,5 +227,9 @@ contract PlaceYourBets is AutomationCompatibleInterface {
 
     function getBetTotalForChoice2() public view returns (uint256) {
         return s_betPool.choice2Bets.length * s_betPool.betAmount;
+    }
+
+    function getNumberOfPastPools() public view returns (uint256) {
+        return s_pastBets.length;
     }
 }

@@ -29,30 +29,6 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               })
           })
 
-          describe("poolExists", function () {
-              it("should return true of pool exists, and revert if it does not exist", async () => {
-                  await poolCreator.createBetPool(
-                      "Ultimate Battle",
-                      "My team is going to destroy the other team!!",
-                      "K's team",
-                      "O's team",
-                      ethers.utils.parseEther("0.01") // 0.01 ETH
-                  )
-                  expect(await poolCreator.poolExists(0)).to.be.true
-              })
-
-              it("should return false if the betpool does not exist", async () => {
-                  await poolCreator.createBetPool(
-                      "Ultimate Battle",
-                      "My team is going to destroy the other team!!",
-                      "K's team",
-                      "O's team",
-                      ethers.utils.parseEther("0.01") // 0.01 ETH
-                  )
-                  expect(await poolCreator.poolExists(4)).to.be.false
-              })
-          })
-
           describe("placeBet", function () {
               it("should return the title of the bet pool", async () => {
                   await poolCreator.createBetPool(
@@ -65,17 +41,17 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   // TODO: placeBet with other signer than deployer
                   expect(
                       await poolCreator.placeBet(
-                          0,
                           1,
                           {
                               value: ethers.utils.parseEther("0.01"),
                           } /**index , choice .. include value of bet */
                       )
-                  ).to.emit(poolCreator, "BetCreated")
+                  ).to.emit(poolCreator, "PlaceYourBets__BetCreated")
               })
           })
           describe("getBetAmount", function () {
-              it("should get the bet amount for the given pool", async () => { await poolCreator.createBetPool(
+              it("should get the bet amount for the given pool", async () => {
+                  await poolCreator.createBetPool(
                       "Ultimate Battle",
                       "My team is going to destroy the other team!!",
                       "K's team",
@@ -83,16 +59,16 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       ethers.utils.parseEther("0.01") // 0.01 ETH
                   )
                   await poolCreator.placeBet(
-                      0,
                       1,
                       {
                           value: ethers.utils.parseEther("0.01"),
                       } /**index , choice .. include value of bet */
                   )
-                  expect(await poolCreator.getBetAmount(0)).to.equal(ethers.utils.parseEther("0.01"));
+                  expect(await poolCreator.getBetAmount()).to.equal(ethers.utils.parseEther("0.01"))
               })
-              
-              it("should not match the test amount for the given pool", async () => { await poolCreator.createBetPool(
+
+              it("should not match the test amount for the given pool", async () => {
+                  await poolCreator.createBetPool(
                       "Ultimate Battle",
                       "My team is going to destroy the other team!!",
                       "K's team",
@@ -100,50 +76,131 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                       ethers.utils.parseEther("0.01") // 0.01 ETH
                   )
                   await poolCreator.placeBet(
-                      0,
                       1,
                       {
                           value: ethers.utils.parseEther("0.01"),
                       } /**index , choice .. include value of bet */
                   )
-                  expect(await poolCreator.getBetAmount(0)).to.not.equal(ethers.utils.parseEther("12"));
+                  expect(await poolCreator.getBetAmount()).to.not.equal(
+                      ethers.utils.parseEther("12")
+                  )
               })
           })
-          describe("getOpenBets", function(){
-            it("should return an array of indecies for all open bets", async () => {
-                await poolCreator.createBetPool(
-                    "Ultimate Battle",
-                    "My team is going to destroy the other team!!",
-                    "K's team",
-                    "O's team",
-                    ethers.utils.parseEther("0.01") // 0.01 ETH
-                );
-                const indexArr = await poolCreator.getOpenBets(1);
-                assert(indexArr.length === 1);
-                expect(await poolCreator.poolExists(0)).to.be.true;
-            });
+          describe("resetBetPool", function () {
+              // why is this not working???
+              it("should fail if the bet status is not completed", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  expect(await poolCreator.resetBetPool()).to.be.revertedWith("PlaceYourBets__PoolNotCompleted")
+              })
           })
-          describe("getBetPoolData", function(){
-            it("should return the pool data from the given betPool", async ()=>{
-                await poolCreator.createBetPool(
-                    "Ultimate Battle",
-                    "My team is going to destroy the other team!!",
-                    "K's team",
-                    "O's team",
-                    ethers.utils.parseEther("0.01") // 0.01 ETH
-                );
-                const betData = await poolCreator.getBetPoolData(0);
-                expect(betData.title).to.equal("Ultimate Battle");
-                expect(betData.description).to.equal("My team is going to destroy the other team!!");
-                expect(betData.choice1).to.equal("K's team");
-                expect(betData.choice2).to.equal("O's team");
-                expect(betData.betAmount).to.equal(ethers.utils.parseEther("0.01"));
-                console.log(betData);
+          describe("checkUpkeep", function () {
+              it("should return false if bet pool status not completed", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  const {upkeepNeeded} = await poolCreator.callStatic.checkUpkeep([])
+                  assert(!upkeepNeeded)
+
+              })
+              it("should return true if bet pool status is completed", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  await poolCreator.selectWinner(1)
+
+                  const {upkeepNeeded} = await poolCreator.callStatic.checkUpkeep([])
+                  assert(upkeepNeeded)
+
+              })
+          })
+          describe("performUpkeep", function(){
+            it("will only run if checkUpkeep is true", async () =>{
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  await poolCreator.startBet();
+                  await poolCreator.selectWinner(1)
+                  const tx = await poolCreator.performUpkeep([])
+                  assert(tx)
             })
           })
-          describe("checkUpkeep", function(){
-            it("should return false if there are no in-progress events", () =>{
-                // stuff
-            })
-          })
+          it("reverts when checkUpkeep is false", async function(){
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  await expect(poolCreator.performUpkeep([])).to.be.revertedWithCustomError(poolCreator, "PlaceYourBets__UpkeepNotNeeded")
+        });
+        it("emits and event, closes the bet, pays out the bettors and resets the betPool", async () => {
+                  await poolCreator.createBetPool(
+                      "Ultimate Battle",
+                      "My team is going to destroy the other team!!",
+                      "K's team",
+                      "O's team",
+                      ethers.utils.parseEther("0.01") // 0.01 ETH
+                  )
+                  await poolCreator.placeBet(
+                      1,
+                      {
+                          value: ethers.utils.parseEther("0.01"),
+                      } /**index , choice .. include value of bet */
+                  )
+                  await poolCreator.startBet();
+                  await poolCreator.selectWinner(1)
+                  const tx = await poolCreator.performUpkeep([])
+                  assert(tx)
+                  expect(await poolCreator.getBetAmount()).to.equal(0)
+                  expect(await poolCreator.getNumberOfPastPools()).to.equal(1)
+        })
       })
