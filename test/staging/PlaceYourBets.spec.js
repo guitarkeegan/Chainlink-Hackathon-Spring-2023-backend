@@ -10,37 +10,20 @@ developmentChains.includes(network.name)
           beforeEach(async function () {
               deployer = (await getNamedAccounts()).deployer
               pyb = await ethers.getContract("PlaceYourBets", deployer)
-              raffleEntranceFee = await raffle.getEntranceFee()
           })
 
-          describe("fulfillRandomWords", function () {
-              it("works with live Chainlink Keepers and Chainlink VRF, we get a random winner", async function () {
-                  // enter the raffle
+          describe("Execute Bet Cycle", function () {
+              it("deploys the contract, creates a bet pool, places a bet, starts the bet, ends the bet, chainlink automation triggers the payout", async function () {
                   console.log("Setting up test...")
-                  const startingTimeStamp = await raffle.getLatestTimeStamp()
                   const accounts = await ethers.getSigners()
 
                   console.log("Setting up Listener...")
                   await new Promise(async (resolve, reject) => {
-                      // setup listener before we enter the raffle
-                      // Just in case the blockchain moves REALLY fast
-                      raffle.once("WinnerPicked", async () => {
-                          console.log("WinnerPicked event fired!")
+                      pyb.once("WinnerSelected", async () => {
+                          console.log("WinnerSelected event fired!")
                           try {
                               // add our asserts here
-                              const recentWinner = await raffle.getRecentWinner()
-                              const raffleState = await raffle.getRaffleState()
-                              const winnerEndingBalance = await accounts[0].getBalance()
-                              const endingTimeStamp = await raffle.getLatestTimeStamp()
-
-                              await expect(raffle.getPlayer(0)).to.be.reverted
-                              assert.equal(recentWinner.toString(), accounts[0].address)
-                              assert.equal(raffleState, 0)
-                              assert.equal(
-                                  winnerEndingBalance.toString(),
-                                  winnerStartingBalance.add(raffleEntranceFee).toString()
-                              )
-                              assert(endingTimeStamp > startingTimeStamp)
+                              
                               resolve()
                           } catch (error) {
                               console.log(error)
@@ -48,11 +31,18 @@ developmentChains.includes(network.name)
                           }
                       })
                       // Then entering the raffle
-                      console.log("Entering Raffle...")
-                      const tx = await raffle.enterRaffle({ value: raffleEntranceFee })
+                      console.log("Creating bet pool...")
+                      const tx = await pyb.createBetPool(
+                        "Ultimate Battle",
+                          "My team is going to destroy the other team!!",
+                          "K's team",
+                          "O's team",
+                          ethers.utils.parseEther("0.01") // 0.01 ETH/MATIC
+                      )
                       await tx.wait(1)
                       console.log("Ok, time to wait...")
-                      const winnerStartingBalance = await accounts[0].getBalance()
+                      const creatorStartingBalance = await accounts[0].getBalance()
+                      console.log("creatorStartingBalance: ", creatorStartingBalance)
 
                       // and this code WONT complete until our listener has finished listening!
                   })
