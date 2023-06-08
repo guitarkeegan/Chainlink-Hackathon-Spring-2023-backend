@@ -14,7 +14,7 @@ const {
     deployRandomNumberDirectFundingConsumer,
 } = require("./deployRandomNumberDirectFundingConsumer")
 const { deployPlaceYourBets } = require("./deployPlaceYourBets")
-
+const {updateFrontend} = require("./deployUpdateFrontEnd")
 async function main() {
     await run("compile")
     const chainId = network.config.chainId
@@ -24,6 +24,8 @@ async function main() {
     await deployRandomNumberConsumer(chainId)
     await deployRandomNumberDirectFundingConsumer(chainId)
     await deployPlaceYourBets(chainId)
+    await updateFrontend(chainId)
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
